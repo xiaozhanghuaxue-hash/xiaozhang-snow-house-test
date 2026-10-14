@@ -10,6 +10,7 @@ function boot(initial, failWrite = false) {
   const element = {innerHTML:'', textContent:'', insertAdjacentHTML(){}, style:{}, classList:{toggle(){}}};
   let writes = 0;
   const context = vm.createContext({
+    SnowBackup:require('../dist/backup-core.js'),
     document:{querySelector:()=>element,querySelectorAll:()=>[],addEventListener(){}},
     window:{addEventListener(){}},
     localStorage:{getItem:k=>storage.get(k)??null,setItem(k,v){if(failWrite)throw Error('blocked');writes++;storage.set(k,v)}},
@@ -21,11 +22,11 @@ function boot(initial, failWrite = false) {
 }
 const clean = {plans:[],sales:[],teach:[],dealers:[],orders:[],other:[],categories:[]};
 const fixture = {
-  plans:[{id:'p',date:'2000-01-01',name:'test'}],
-  sales:[{id:'s',receipt:100,ship:8,note:'test',shipping:'test address',items:[{name:'test',cost:20,qty:2}]}],
-  teach:[{id:'t',date:'2000-01-01',hours:1.5,rate:200,fee:300}],
-  dealers:[{id:'d',name:'test',location:'test'}],orders:[{dealer:'d',amount:100}],
-  other:[{project:'test',amount:200}],categories:[{name:'test',sale:50,cost:20}],
+  plans:[{id:'p',date:'2000-01-01',name:'test',done:false}],
+  sales:[{id:'s',date:'2000-01-01',receipt:100,ship:8,note:'test',shipping:'test address',items:[{name:'test',color:'白',size:'M',cost:20,qty:2}]}],
+  teach:[{id:'t',date:'2000-01-01',hours:1.5,rate:200,fee:300,status:'planned'}],
+  dealers:[{id:'d',name:'test',location:'test'}],orders:[{id:'o',date:'2000-01-01',dealer:'d',amount:100}],
+  other:[{id:'x',date:'2000-01-01',project:'test',amount:200}],categories:[{name:'test',sale:50,cost:20}],
 };
 const existing=boot(fixture);
 assert.equal(existing.writes(),0,'loading must not write or reset');
