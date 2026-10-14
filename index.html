@@ -59,11 +59,15 @@
     <button data-view="home" class="active">首页</button><button data-view="plan">计划</button><button data-view="records">记录</button><button data-view="admin">后台</button>
   </nav>
   <div class="sheet" id="sheet"><div class="panel" id="panel"></div></div>
+  <script src="./backup-core.js?v=20261015-1"></script>
   <script>
   const key='snow-house-mobile-v2';
   function emptyData(){return {plans:[],sales:[],teach:[],dealers:[],orders:[],other:[],categories:[]}}
   const base=emptyData();
-  const data=Object.assign(base,JSON.parse(localStorage.getItem(key)||'{}'));let view='home',filter='all',selectedDate=iso(new Date());
+  let persistedRaw=null,storageFault='';
+  const data=base;
+  try{persistedRaw=localStorage.getItem(key);if(persistedRaw!==null)Object.assign(data,SnowBackup.validate(JSON.parse(persistedRaw)))}catch(e){storageFault='原始资料读取或校验失败，已停止写入；请在备份与恢复中选择有效备份。原始内容未删除。'}
+  let view='home',filter='all',selectedDate=iso(new Date());
   const app=document.querySelector('#app'),sheet=document.querySelector('#sheet'),panel=document.querySelector('#panel');
   function iso(d){return d.toISOString().slice(0,10)}function save(){localStorage.setItem(key,JSON.stringify(data))}function yen(n){return '¥'+Number(n||0).toLocaleString('zh-CN',{maximumFractionDigits:2})}function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}function esc(s=''){return String(s).replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]))}
   function brand(){return `<div class="brand"><span class="mark"><svg viewBox="0 0 64 52" aria-hidden="true"><path fill="#1d6bdc" d="M1 48 27 7l9 14 8-12 19 39-28-21-8 12-7-10Z"/><path fill="#fff" d="m21 28 6-10 6 9 3-4 6 8-8-4-6 9-4-7Z"/></svg></span>小张的雪屋</div>`}
@@ -85,7 +89,7 @@
     filter='all';selectedDate=iso(new Date());view='admin';render();
     openSheet('<h2>已清空全部数据</h2><div class="notice">当前入口的测试记录、商品品类、价格和经销商资料已全部清空，无法从本应用撤销。</div><p class="meta">当前仍是测试版。正式版的云端保存和备份完成后，再填写正式资料。</p><div class="actions"><button class="btn primary" onclick="closeSheet()">知道了</button></div>');
   }
-  function render(){app.innerHTML=view==='home'?home():view==='plan'?plans():view==='records'?records():admin();if(view==='admin')app.insertAdjacentHTML('beforeend','<section class="card"><button class="btn" style="color:#a33e3e" onclick="showResetData()">清空全部数据</button><div class="meta">删除本入口全部测试记录、品类、价格及经销商资料</div></section>');document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===view))}
+  function render(){app.innerHTML=view==='home'?home():view==='plan'?plans():view==='records'?records():admin();if(storageFault)app.insertAdjacentHTML('afterbegin','<div class="notice">'+esc(storageFault)+'</div>');document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.view===view))}
   document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});
   let pageScroll=0,sheetReturnFocus=null;
   function fitSheet(){const viewport=window.visualViewport;sheet.style.setProperty('--dialog-height',`${viewport?viewport.height:window.innerHeight}px`);sheet.style.setProperty('--dialog-top',`${viewport?viewport.offsetTop:0}px`)}
@@ -118,5 +122,6 @@
   function showCategories(){openSheet(`<h2>商品品类</h2><div class="notice">修改或删除只影响以后选品，历史交易保留当时的名称和结算价。</div><section class="card">${data.categories.map((x,i)=>`<div class="list-row"><div class="grow"><div class="title">${esc(x.name)}</div><div class="meta">销售 ${yen(x.sale)} · 结算 ${yen(x.cost)}</div></div><button class="btn" onclick="removeCategory(${i})">删除</button></div>`).join('')}</section><form onsubmit="addCategory(event)"><div class="field"><label>新商品品类</label><input name="name" required placeholder="例如：羽绒服"></div><div class="field"><label>销售单价</label><input name="sale" type="number" min="0" step="0.01" required></div><div class="field"><label>结算价格</label><input name="cost" type="number" min="0" step="0.01" required></div>${formActions('添加品类')}</form>`)}function addCategory(e){e.preventDefault();const f=fields(e);data.categories.push({name:f.name,sale:+f.sale,cost:+f.cost});save();showCategories()}function removeCategory(i){data.categories.splice(i,1);save();showCategories()}
   render();
   </script>
+  <script src="./backup-ui.js?v=20261015-1"></script>
 </body>
 </html>
